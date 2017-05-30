@@ -29,7 +29,7 @@ def compress_image(path):
         - If the user doesn't have permissions to read/write file, handle
           this exception properly
         - Handle png image compression as well
-        - Prompt user for max resolution?
+        - Prompt user for max resolutions
     """
     img = Image.open(path)
     
