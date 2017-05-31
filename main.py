@@ -26,13 +26,15 @@ def compress_image(path):
     uncompressed image with the compressed one.
     
     TODO:
-        - If the user doesn't have permissions to read/write file, handle
-          this exception properly
         - Handle png image compression as well
         - Prompt user for max resolutions
     """
-    img = Image.open(path)
-    
+    try:   
+        img = Image.open(path)
+    except IOError:
+        print ("You don't have permissions to open the image!")
+        sys.exit()
+
     MAX_WIDTH = 960
     MAX_HEIGHT = 1080
     (width, height) = img.size
@@ -47,8 +49,12 @@ def compress_image(path):
                 width = int(round((MAX_HEIGHT / float(height)) * width))
                 height = MAX_HEIGHT
         img = img.resize((width, height), Image.ANTIALIAS)
-
-    img.save(path, format="JPEG", quality=85)
+    
+    try:
+        img.save(path, format="JPEG", quality=85)
+    except PermissionError:
+        print ("You don't have permissions to save the image!\nExiting program...")
+        sys.exit()
 
 
 def main():
