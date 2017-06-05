@@ -18,15 +18,14 @@ import re
 import glob
 import sys
 from PIL import Image
+import magic
 
-
-def compress_image(path):
+def compress_image(path, image_format):
     """
     Compresses the image in path and replaces the
     uncompressed image with the compressed one.
     
     TODO:
-        - Handle png image compression as well
         - Prompt user for max resolutions
     """
     try:   
@@ -38,6 +37,10 @@ def compress_image(path):
     MAX_WIDTH = 960
     MAX_HEIGHT = 1080
     (width, height) = img.size
+
+    # Convert PNG images to RGB to save them as JPEG images
+    if image_format == 'PNG':
+        img = img.convert('RGB')
 
     if width > MAX_WIDTH or height > MAX_HEIGHT:
         if width > height:
@@ -61,9 +64,6 @@ def main():
     """
     Checks if path was given and finds recursively files in directory and 
     its subdirectories.
-
-    TODO: 
-        - Check if file is an image
     """
 
     if len(sys.argv) <= 1:
@@ -73,15 +73,22 @@ def main():
 
     path = sys.argv[1]
     file_counter = 0
+    FILE_TYPES = [
+        "image/jpeg",
+        "image/png",
+    ]
 
     for filename in glob.iglob(path+'/**', recursive=True):
         if os.path.isdir(filename):
             # Don't try to compress directories
             continue
         else:
-            compress_image(filename)
-            print ("Resized image %s" % (path))
-            file_counter += 1
+            mimetype = magic.from_file(filename, mime=True)
+            if mimetype in FILE_TYPES:
+                image_format = mimetype.split('/')[1].upper()
+                compress_image(filename, image_format)
+                print ("Resized image %s" % (path))
+                file_counter += 1
 
     print ("%d images were resized" % (file_counter))    
 
