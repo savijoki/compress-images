@@ -1,6 +1,6 @@
 # compress-images
 
-Image compression using PIL.
+Image compression using Pillow. Both PNG and JPEG -filetypes are supported. Filetype is recognized using [python-magic](https://github.com/ahupp/python-magic).
 
 ## Usage
 
@@ -10,8 +10,4 @@ $ python3 main.py <path-to-directory>
 
 ## TODO
 
-- Check if file is an image
-- If the user doesn't have permissions to read/write file, handle
-    this exception properly
-- Handle png image compression as well
 - Prompt user for max resolution
