@@ -12,47 +12,58 @@
 # $ python3 main.py <path-to-directory>
 # 
 
-
 import os
 import re
 import glob
 import sys
 from PIL import Image
 import magic
+from enum import Enum
 
-def compress_image(path, image_format):
+class Orientation(Enum):
+    """
+    Enumerations for image orientation.
+    """
+    PORTRAIT = 0
+    LANDSCAPE = 1
+
+
+def compress_image(path, image_format, MAX_WIDTH, MAX_HEIGHT):
     """
     Compresses the image in path and replaces the
     uncompressed image with the compressed one.
-    
-    TODO:
-        - Prompt user for max resolutions
     """
+    
     try:   
         img = Image.open(path)
     except IOError:
         print ("You don't have permissions to open the image!")
         sys.exit()
 
-    MAX_WIDTH = 960
-    MAX_HEIGHT = 1080
     (width, height) = img.size
+    orientation = Orientation.LANDSCAPE if width >= height else Orientation.PORTRAIT
 
     # Convert PNG images to RGB to save them as JPEG images
     if image_format == 'PNG':
         img = img.convert('RGB')
 
     if width > MAX_WIDTH or height > MAX_HEIGHT:
-        if width > height:
+        if orientation == Orientation.LANDSCAPE:
             if width > MAX_WIDTH:
                 height = int(round((MAX_WIDTH / float(width)) * height))
                 width = MAX_WIDTH
+            else:
+                width = int(round((MAX_HEIGHT / float(height)) * width))
+                height = MAX_HEIGHT
         else:
             if height > MAX_HEIGHT:
                 width = int(round((MAX_HEIGHT / float(height)) * width))
                 height = MAX_HEIGHT
+            else:
+                height = int(round((MAX_WIDTH / float(width)) * height))
+                width = MAX_WIDTH
         img = img.resize((width, height), Image.ANTIALIAS)
-    
+
     try:
         img.save(path, format="JPEG", quality=85)
     except PermissionError:
@@ -78,6 +89,18 @@ def main():
         "image/png",
     ]
 
+    # Prompt for max resolutions
+    while True:
+        try:
+            MAX_WIDTH = int(input("Enter max width: "))
+            MAX_HEIGHT = int(input("Enter max height: "))
+            break
+        except ValueError:
+            print ("Not a valid integer!\nPlease type an integer.")
+        except KeyboardInterrupt:
+            print ("\nExiting program...")
+            sys.exit()
+
     for filename in glob.iglob(path+'/**', recursive=True):
         if os.path.isdir(filename):
             # Don't try to compress directories
@@ -86,11 +109,11 @@ def main():
             mimetype = magic.from_file(filename, mime=True)
             if mimetype in FILE_TYPES:
                 image_format = mimetype.split('/')[1].upper()
-                compress_image(filename, image_format)
-                print ("Resized image %s" % (path))
+                compress_image(filename, image_format, MAX_WIDTH, MAX_HEIGHT)
+                print ("Resized image: %s" % (filename))
                 file_counter += 1
+    print ("%d images were resized!\nDone!" % (file_counter))    
 
-    print ("%d images were resized" % (file_counter))    
 
 if __name__ == '__main__':
     main()
